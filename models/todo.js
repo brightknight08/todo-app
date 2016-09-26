@@ -10,6 +10,26 @@ function Todo() {
     });
   };
 
+  this.getItem = function (todo_id, res) {
+    connection.acquire(function(err, con) {
+      console.log('getting item details for id # ' + todo_id);
+      con.query('select count(*) as itemcount from todo_list where id = ?', [todo_id], function(err, rows, results) {
+        con.release();
+        if (err) {
+          res.send({status: 1, message: 'Get Item failed'});
+        } else {
+          // check if there was an item
+          if (rows[0].itemcount > 0 ) {
+            res.send({status: 0, message: 'No error', id: todo_id, name: rows[0].name, timestamp: rows[0].count });
+          } else {
+            res.send({status: 1, message: 'No item with that name'});
+          }
+
+        }
+      });
+    });
+  }
+
   this.create = function(todo, res) {
     connection.acquire(function(err, con) {
       con.query('insert into todo_list set ?', todo, function(err, result) {
@@ -38,12 +58,13 @@ function Todo() {
 
   this.delete = function(id, res) {
     connection.acquire(function(err, con) {
+      console.log([id]);
       con.query('delete from todo_list where id = ?', [id], function(err, result) {
         con.release();
         if (err) {
           res.send({status: 1, message: 'Failed to delete'});
         } else {
-          res.send({status: 0, message: 'Deleted successfully'});
+          res.send({status: 0, message: 'Deleted successfully', itemid: [id]});
         }
       });
     });
